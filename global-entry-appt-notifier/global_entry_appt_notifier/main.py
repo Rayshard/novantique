@@ -18,14 +18,12 @@ from datetime import date, datetime
 
 def send_slack_message(client: WebClient, recipient: str, message: str) -> bool:
     try:
-        response = client.chat_postMessage(channel=recipient, text=message)
-        assert response["message"]["text"] == message
-        
-        return True
+        client.chat_postMessage(channel=recipient, text=message)
     except SlackApiError as e:
         logging.error(f"Unable to send slack message: {e.response['error']}")
         return False
 
+    return True
 
 @dataclass
 class Location:
@@ -197,7 +195,6 @@ def run() -> None:
 
         last_query = query
 
-        return
         time.sleep(15)
 
 
