@@ -1,0 +1,14 @@
+{
+    "current_appt_date": {
+        "month": 7,
+        "day": 1,
+        "year": 2022
+    }, 
+    "locations": [
+        14681,
+        5441,
+        9300
+    ],
+    "notify_on_macos": true,
+    "notify_on_slack": true
+}
