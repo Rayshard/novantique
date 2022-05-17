@@ -9,6 +9,6 @@
         5441,
         9300
     ],
-    "notify_on_macos": true,
+    "notify_on_macos": false,
     "notify_on_slack": true
 }

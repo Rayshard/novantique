@@ -1,12 +1,12 @@
 from dataclasses import dataclass
 from distutils.command.config import config
 import json
+import traceback
 from typing import Callable, Dict, List
 import dotenv
 import logging
 import time
 import jsonschema
-import pync
 import subprocess
 from pprint import pprint
 from pathlib import Path
@@ -14,6 +14,12 @@ import requests
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from datetime import date, datetime
+
+
+try:
+    import pync
+except:
+    pass
 
 
 def send_slack_message(client: WebClient, recipient: str, message: str) -> bool:
@@ -48,11 +54,13 @@ class Config:
 
 def get_all_locations() -> Dict[int, Location]:
     URL = "https://ttp.cbp.dhs.gov/schedulerapi/locations/?operational=true&serviceName=Global Entry"
-
-    result : Dict[int, Location] = {}
     
     response = requests.get(URL).json()
-    assert(isinstance(response, list))
+    if not isinstance(response, list):
+        logging.error("get_all_locations: request response is not a list")
+        return {}
+
+    result : Dict[int, Location] = {}
 
     for item in response:
         assert(isinstance(item, dict))
@@ -68,10 +76,12 @@ def get_all_locations() -> Dict[int, Location]:
 def get_locations_with_appts_by(by_date: date) -> List[Location]:
     URL = f"https://ttp.cbp.dhs.gov/schedulerapi/slots/asLocations?minimum=1&filterTimestampBy=before&timestamp={by_date.isoformat()}&serviceName=Global%20Entry"
 
-    result : List[Location] = []
-    
     response = requests.get(URL).json()
-    assert(isinstance(response, list))
+    if not isinstance(response, list):
+        logging.error("get_locations_with_appts_by: request response is not a list")
+        return []
+
+    result : List[Location] = []
 
     for item in response:
         assert(isinstance(item, dict))
@@ -86,10 +96,12 @@ def get_locations_with_appts_by(by_date: date) -> List[Location]:
 def get_appts_by(loc: Location, by_date: date) -> List[Appointment]:
     URL = f"https://ttp.cbp.dhs.gov/schedulerapi/slots?filterTimestampBy=before&timestamp={by_date.isoformat()}&locationId={loc.id}&minimum=1"
 
-    result : List[Appointment] = []
-    
     response = requests.get(URL).json()
-    assert(isinstance(response, list))
+    if not isinstance(response, list):
+        logging.error("get_appts_by: request response is not a list")
+        return []
+
+    result : List[Appointment] = []
 
     for item in response:
         assert(isinstance(item, dict))
@@ -188,6 +200,7 @@ def run() -> None:
 
             for send_notification in notifiers:
                 send_notification(notifcation_msg)
+                time.sleep(1) # have a delay so that notifications don't overlap on the same device
         
             logging.debug("Done sending notifications.")
         else:
@@ -199,6 +212,29 @@ def run() -> None:
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)-8s %(message)s',
+        level=logging.DEBUG,
+        datefmt='%Y-%m-%d %H:%M:%S',
+        handlers=[
+            logging.FileHandler(f"output-{time.time_ns()}.log"),
+            logging.StreamHandler()
+        ]
+    )
 
-    run()
+    num_restarts = 0
+    restart_cooldown = 1 # number of seconds to wait before a restart
+
+    while True:
+        try:
+            logging.info(f"Started." + (f"Restart #{num_restarts}" if num_restarts != 0 else ""))
+
+            run()
+        except Exception:
+            logging.error(traceback.format_exc())
+            logging.info(f"Restarting in {restart_cooldown} seconds...")
+
+            time.sleep(restart_cooldown)
+
+            restart_cooldown *= 2
+            num_restarts += 1
