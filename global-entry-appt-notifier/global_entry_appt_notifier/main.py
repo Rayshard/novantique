@@ -212,14 +212,14 @@ def run() -> None:
 
 
 if __name__ == "__main__":
+    logging_file_handler = logging.FileHandler(f"output-{time.time_ns()}.log")
+    logging_file_handler.setLevel(logging.ERROR)
+
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         level=logging.DEBUG,
         datefmt='%Y-%m-%d %H:%M:%S',
-        handlers=[
-            logging.FileHandler(f"output-{time.time_ns()}.log"),
-            logging.StreamHandler()
-        ]
+        handlers=[logging.StreamHandler(), logging_file_handler]
     )
 
     num_restarts = 0

@@ -1,4 +1,6 @@
 .env
+.python-version
+*.log
+
 node_modules
 __pycache__
-.python-version
