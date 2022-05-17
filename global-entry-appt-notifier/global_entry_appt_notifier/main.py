@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from distutils.command.config import config
 import json
 import traceback
 from typing import Callable, Dict, List
