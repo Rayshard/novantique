@@ -6,8 +6,6 @@ import dotenv
 import logging
 import time
 import jsonschema
-import subprocess
-from pprint import pprint
 from pathlib import Path
 import requests
 from slack_sdk import WebClient
