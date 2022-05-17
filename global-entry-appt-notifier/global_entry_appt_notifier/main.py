@@ -45,6 +45,7 @@ class Appointment:
 class Config:
     current_appt_date: date
     desired_locations: List[Location]
+    ping_interval: int
     notify_on_macos: bool
     notify_on_slack: bool
 
@@ -124,6 +125,7 @@ def load_config() -> Config:
                 }
             },
             "locations": { "type": "array", "items": { "type": "integer" } },
+            "ping_interval": { "type": "integer" },
             "notify_on_macos": { "type": "boolean" },
             "notify_on_slack": { "type": "boolean" },
         }
@@ -137,7 +139,8 @@ def load_config() -> Config:
             current_appt_date=date(config["current_appt_date"]["year"], config["current_appt_date"]["month"], config["current_appt_date"]["day"]),
             desired_locations=[loc for id, loc in get_all_locations().items() if id in config["locations"]],
             notify_on_macos=config["notify_on_macos"],
-            notify_on_slack=config["notify_on_slack"]
+            notify_on_slack=config["notify_on_slack"],
+            ping_interval=config["ping_interval"],
         )
 
 def run() -> None:
@@ -154,7 +157,7 @@ def run() -> None:
 
         client = WebClient(token=SLACK_API_TOKEN)
 
-        for recipient_name, recipient_id in RECIPIENTS.items():
+        for _, recipient_id in RECIPIENTS.items():
             send_slack_message(client, recipient_id, f"I have started checking for available appointments!")
 
         def slack_notifier(msg: str) -> None:
@@ -205,7 +208,7 @@ def run() -> None:
 
         last_query = query
 
-        time.sleep(15)
+        time.sleep(CONFIG.ping_interval)
 
 
 if __name__ == "__main__":

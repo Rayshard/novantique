@@ -9,6 +9,7 @@
         5441,
         9300
     ],
+    "ping_interval": "10",
     "notify_on_macos": false,
     "notify_on_slack": true
 }
